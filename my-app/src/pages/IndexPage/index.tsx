@@ -19,6 +19,7 @@ function IndexPage(){
             Point.position.x = -1 * a1 
         },
         onChangeModel: (Point) => {
+            
         }
     })
 }
