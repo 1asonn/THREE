@@ -3,3 +3,4 @@ export abstract class instanceBasic {
     public update?: Function
     public ChangeModel?: (...args: any) => void
 }
+
