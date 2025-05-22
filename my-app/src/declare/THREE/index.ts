@@ -112,8 +112,8 @@ export interface ParticleModelProps {
      */
     onAnimationFrameUpdate?: (PerfromPoint: THREE.Points<THREE.BufferGeometry, THREE.PointsMaterial>, TweenList: TWEEN_POINT[], Geometry: THREE.BufferGeometry) => unknown
 }
-  
-    
+
+
     
     
     
