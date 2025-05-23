@@ -37,7 +37,7 @@ export interface AtmosphereParticleProps {
 }
 
 // 定义氛围粒子系统
-export class AtmosphereParticle extends instanceBasic{
+class AtmosphereParticle extends instanceBasic{
     private readonly longestDistance: number
     private readonly particleSum: number
     private readonly renderUpdate?: (Point: THREE.Points) => void

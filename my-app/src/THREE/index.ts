@@ -34,8 +34,8 @@ interface ParticleSystemProps {
     Models:ParticleModelProps[],
     instance:instanceItem[]
     AnimateDuration?:number,
-    onModelsFinishedLoad?:(...args:any)=>void,
-    LoadingManager?:THREE.LoadingManager
+    // onModelsFinishedLoad?:(...args:any)=>void,
+    // LoadingManager?:THREE.LoadingManager
 }
 
 class ParticleSystem {
@@ -86,7 +86,7 @@ class ParticleSystem {
   
     // 新编写的物体添加核心
     constructor(options: ParticleSystemProps) {
-      const { AnimateDuration, onModelsFinishedLoad, LoadingManager } = options
+      const { AnimateDuration } = options
       this.CanvasWrapper = options.CanvasWrapper
       this.instance = options.instance != null ? options.instance : []
       this.Models = new Map<string, ParticleModelProps>()
@@ -94,9 +94,7 @@ class ParticleSystem {
         this.Models.set(i.name, i)
       }
       this.AnimateDuration = typeof AnimateDuration === 'number' ? AnimateDuration : 1500
-      this.onModelsFinishedLoad = onModelsFinishedLoad
-      this.manager = LoadingManager
-      this.defaultLoader = new OBJLoader(this.manager)
+      this.defaultLoader = new OBJLoader()
       /** 粒子Map */
       this.ParticleAnimeMap = []
       /* 宽高 */
@@ -115,7 +113,7 @@ class ParticleSystem {
       // 性能监控插件
       this.initStats()
       // 载入模型
-      this._addModels()
+    //   this._addModels()
       // 效果器
       this.createEffect()
       // 轨道控制插件（鼠标拖拽视角、缩放等）
@@ -196,6 +194,59 @@ class ParticleSystem {
         }
     }
 
+    
+    private createEffect(){
+        this.composer = new EffectComposer(this.renderer!)
+        const renderPass = new RenderPass(this.scene!,this.camera!)
+        const bloomPass = new BloomPass(0.75)
+        const filmPass = new FilmPass(0.5,0.5,1500,0)
+        const shaderPass = new ShaderPass(FocusShader)
+        shaderPass.uniforms.screenWidth.value = window.innerWidth
+        shaderPass.uniforms.screenHeight.value = window.innerHeight
+        shaderPass.uniforms.sampleDistance.value = 0.4
+        shaderPass.renderToScreen = true
+    
+        this.composer.addPass(renderPass)
+        this.composer.addPass(bloomPass)
+        this.composer.addPass(filmPass)
+        this.composer.addPass(shaderPass)
+    }
+
+
+    private update(t:number){
+        Tween.update()
+        this.MainParticleGroup?.update()
+        this.onRendering?.call(this,t)
+        this.stats?.update()
+        this.instance?.forEach((item) => {
+            item.update()
+        })
+        this.composer?.render()
+        requestAnimationFrame((t) => {
+            this.update(t)
+        })
+    }
+
+    private _addModels(){
+        const TextureLoader = new THREE.TextureLoader()
+        this.PointMaterial = new THREE.PointsMaterial({
+            size: 5,
+            sizeAttenuation: true,
+            transparent: true,
+            depthWrite: false,
+            opacity: 1,
+            map: TextureLoader.load(g),
+            blending: THREE.AdditiveBlending
+        })
+        this.Models.forEach((model) => {
+            let Geometry:THREE.BufferGeometry
+            let Vertices = new Float32Array([])
+
+            const finishLoad = () => {
+                
+            }
+        })
+    }
 }
 
 export default ParticleSystem
