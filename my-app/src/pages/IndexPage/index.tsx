@@ -28,10 +28,10 @@ function IndexPage(){
             Point.position.x = -1 * a1
         },
         onChangeModel: () => {
-            // tween2.stop()
-            // tween1.stop().to({ firefly: 0.04 }, 1500).chain(tween2)
-            // tween2.to({ firefly: 0.002 }, 1500)
-            // tween1.start()
+            tween2.stop()
+            tween1.stop().to({ firefly: 0.04 }, 1500).chain(tween2)
+            tween2.to({ firefly: 0.002 }, 1500)
+            tween1.start()
         }
     })
 
@@ -70,7 +70,6 @@ function IndexPage(){
       loader:{
         loaderInstance : new FBXLoader(),
         load(group:any){
-          console.log("this is group!",group)
           const g = new BufferGeometry()
           let arr = new Float32Array([])
           for (const i of group.children){
@@ -81,12 +80,12 @@ function IndexPage(){
         }
       }
     }]
-    //   // @ts-expect-error
-    // window.changeModel = (name: string) => {
-    //     if (MainParticle != null) {
-    //     MainParticle.ChangeModel(name)
-    //     }
-    // }
+      // @ts-expect-error
+    window.changeModel = (name: string) => {
+        if (MainParticle != null) {
+        MainParticle.ChangeModel(name)
+        }
+    }
     
     useEffect(() => {
         if ((MainParticle == null) && wrapper.current != null) {
@@ -94,7 +93,7 @@ function IndexPage(){
           MainParticle = new ParticleSystem({
             Models,
             CanvasWrapper: wrapper.current,
-            instance: [Atomsphere1,Atomsphere2,Atomsphere3]
+            instance: []
         })
         }
     })
@@ -106,7 +105,7 @@ function IndexPage(){
             {
               Models.map((val) => {
                 return (
-                  <li key={val.name} onClick={() => {}}>{val.name}</li>
+                  <li key={val.name} onClick={() => {MainParticle?.ChangeModel(val.name)}}>{val.name}</li>
                 )
               })
             }

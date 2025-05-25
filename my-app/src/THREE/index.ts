@@ -18,7 +18,7 @@ import g from '../assets/images/gradient.png'
 
 import { ParticleModelProps, TWEEN_POINT } from '@/declare/THREE'
 import VerticesDuplicateRemove from '@/utils/VerticesDuplicateRemove'
-import BuiltinShaderAttributeName from '@/constant/THREE/BuiltinShaderAttributeName'
+import BuiltinShaderAttributeName from '../constant/THREE/BuiltinShaderAttributeName'
 import { instanceBasic } from '@/declare/THREE/instance'
 
 
@@ -95,6 +95,7 @@ class ParticleSystem {
         this.Models.set(i.name, i)
       }
       this.AnimateDuration = typeof AnimateDuration === 'number' ? AnimateDuration : 1500
+      this.MainParticleGroup = new Tween.Group()
       this.defaultLoader = new OBJLoader()
       /** 粒子Map */
       this.ParticleAnimeMap = []
@@ -226,6 +227,19 @@ class ParticleSystem {
         requestAnimationFrame((t) => {
             this.update(t)
         })
+        // 模型 update 钩子更新
+        this.Models.forEach((val) => {
+            if (val.name === this.CurrentUseModelName && val.onAnimationFrameUpdate != null) {
+            if (val.onAnimationFrameUpdate(this.AnimateEffectParticle!, this.ParticleAnimeMap, val.geometry!) === true) {
+                for (const i of BuiltinShaderAttributeName) {
+                const p = this.AnimateEffectParticle?.geometry?.getAttribute(i)
+                if (p != null) {
+                    p.needsUpdate = true
+                }
+                }
+            }
+            }
+        })
     }
 
     // 加载粒子模型列表
@@ -275,6 +289,7 @@ class ParticleSystem {
         this.modelList.forEach((item) => {
             maxParticlesCount = Math.max(maxParticlesCount,item.attributes.position.count)
         })
+        this.maxParticlesCount = maxParticlesCount
         for (let i = 0; i < maxParticlesCount; i++) {
             const x = getRangeRandom(-1 * randMaxLength, randMaxLength)
             const y = getRangeRandom(-1 * randMaxLength, randMaxLength)
@@ -300,9 +315,17 @@ class ParticleSystem {
                 // @ts-expect-error
                 point.tweenctx!._valuesStart.z = point.z
             })
-            
+            .onStart((point) => {
+                // @ts-expect-error
+                point.tweenctx!._valuesStart.x = point.x
+                // @ts-expect-error
+                point.tweenctx!._valuesStart.y = point.y
+                // @ts-expect-error
+                point.tweenctx!._valuesStart.z = point.z
+                point.isPlaying = true
+            })
 
-
+            this.ParticleAnimeMap[i] = p
         }
         const AnimateEffectGeometry = new THREE.BufferGeometry()
         AnimateEffectGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3, false))
@@ -311,8 +334,49 @@ class ParticleSystem {
     }
 
     ChangeModel(name:string,time:number = this.AnimateDuration){
+        this.CurrentUseModelName = name
+        this.LastUseModelName = this.CurrentUseModelName
         const model = this.modelList.get(name)
+        const modelHook = this.Models.get(name)
+        const targetModel = model!.getAttribute('position')
+        const sourceModel = this.AnimateEffectParticle!.geometry.getAttribute('position')
+        console.log("this is sourceModel",sourceModel)
         
+        const TimerId = setTimeout(() => {
+            modelHook!.onEnterEnd?.call(this, this.AnimateEffectParticle!)
+        }, time * 2)
+        for (let i = 0; i < this.maxParticlesCount; i++) {
+            const p = this.ParticleAnimeMap[i]
+            this.ParticleAnimeMap[i]!.isPlaying = true
+            const cur = i % targetModel.count
+            // 位置同步，解决 onAnimationFrameUpdate 回调更新时位置错误的问题
+            p.x = sourceModel.getX(i)
+            p.y = sourceModel.getY(i)
+            p.z = sourceModel.getZ(i)
+           
+            p.tweenctx!.stop()
+              .to(
+                {
+                  x: targetModel.array[cur * 3],
+                  y: targetModel.array[cur * 3 + 1],
+                  z: targetModel.array[cur * 3 + 2]
+                },
+                time
+              )
+              .delay(time * Math.random())
+              .onUpdate((o) => {
+                sourceModel.setXYZ(i, o.x, o.y, o.z)
+                sourceModel.needsUpdate = true
+              })
+              .onStop((o) => {
+                clearTimeout(TimerId)
+              })
+              .start()
+        }
+        // 触发 addons 的钩子
+        this.instance?.forEach((val) => {
+        val.ChangeModel?.call(this)
+      })
     }
 }
 
