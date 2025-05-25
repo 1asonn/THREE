@@ -14,7 +14,8 @@ import type { Group as TweenGroup } from '@tweenjs/tween.js'
 import Stats from 'three/examples/jsm/libs/stats.module.js'
 import { throttle } from 'lodash'
 
-import g from '@/assets/images/gradient.png'
+import g from '../assets/images/gradient.png'
+
 import { ParticleModelProps, TWEEN_POINT } from '@/declare/THREE'
 import VerticesDuplicateRemove from '@/utils/VerticesDuplicateRemove'
 import BuiltinShaderAttributeName from '@/constant/THREE/BuiltinShaderAttributeName'
@@ -113,7 +114,7 @@ class ParticleSystem {
       // 性能监控插件
       this.initStats()
       // 载入模型
-    //   this._addModels()
+      this._addModels()
       // 效果器
       this.createEffect()
       // 轨道控制插件（鼠标拖拽视角、缩放等）
@@ -227,6 +228,7 @@ class ParticleSystem {
         })
     }
 
+    // 加载粒子模型列表
     private _addModels(){
         const TextureLoader = new THREE.TextureLoader()
         this.PointMaterial = new THREE.PointsMaterial({
@@ -243,9 +245,74 @@ class ParticleSystem {
             let Vertices = new Float32Array([])
 
             const finishLoad = () => {
-                
+                this.modelList.set(model.name, Geometry)
+                model.onLoadComplete?.call(this,Geometry)
+                this._finishLoadModel()
+            }
+            
+
+            if(typeof model.path === 'string'){
+                if (model.loader != null ){
+                    const { loaderInstance, load } = model.loader
+                    loaderInstance.load(model.path,(res) => {
+                        // 使用提供的自定义加载方法加载粒子系统
+                        Geometry = load(res)
+                        finishLoad()
+                    })
+                }
             }
         })
+
+        
+    }
+
+    // 完成粒子模型加载后回调
+    // 初始化粒子动画场景
+    private _finishLoadModel(){
+        const vertices = []
+        let maxParticlesCount = 0
+        const randMaxLength = 1500
+        this.modelList.forEach((item) => {
+            maxParticlesCount = Math.max(maxParticlesCount,item.attributes.position.count)
+        })
+        for (let i = 0; i < maxParticlesCount; i++) {
+            const x = getRangeRandom(-1 * randMaxLength, randMaxLength)
+            const y = getRangeRandom(-1 * randMaxLength, randMaxLength)
+            const z = getRangeRandom(-1 * randMaxLength, randMaxLength)
+            vertices.push(x, y, z)
+
+            // 使用tween.js赋予粒子动画
+            const p: TWEEN_POINT = {
+                x,
+                y,
+                z,
+                isPlaying: true
+            }
+
+            p.tweenctx = new Tween.Tween(p,this.MainParticleGroup)
+            .easing(Tween.Easing.Exponential.In)
+            .onComplete((point) => {
+                // 直接处理tween实例内部私有变量 为什么不使用API进行调用？
+                // @ts-expect-error
+                point.tweenctx!._valuesStart.x = point.x
+                // @ts-expect-error
+                point.tweenctx!._valuesStart.y = point.y
+                // @ts-expect-error
+                point.tweenctx!._valuesStart.z = point.z
+            })
+            
+
+
+        }
+        const AnimateEffectGeometry = new THREE.BufferGeometry()
+        AnimateEffectGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3, false))
+        this.AnimateEffectParticle = new THREE.Points(AnimateEffectGeometry, this.PointMaterial)
+        this.scene?.add(this.AnimateEffectParticle)
+    }
+
+    ChangeModel(name:string,time:number = this.AnimateDuration){
+        const model = this.modelList.get(name)
+        
     }
 }
 
