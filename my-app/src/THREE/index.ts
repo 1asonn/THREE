@@ -9,7 +9,7 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
 import { FocusShader } from 'three/examples/jsm/shaders/FocusShader'
 
 import Tween from '@tweenjs/tween.js'
-import type { Group as TweenGroup } from '@tweenjs/tween.js'
+import { Group as TweenGroup } from '@tweenjs/tween.js'
 
 import Stats from 'three/examples/jsm/libs/stats.module.js'
 import { throttle } from 'lodash'
@@ -270,6 +270,7 @@ class ParticleSystem {
                     const { loaderInstance, load } = model.loader
                     loaderInstance.load(model.path,(res) => {
                         // 使用提供的自定义加载方法加载粒子系统
+                        console.log("what's this?",res)
                         Geometry = load(res)
                         finishLoad()
                     })
@@ -285,11 +286,13 @@ class ParticleSystem {
     private _finishLoadModel(){
         const vertices = []
         let maxParticlesCount = 0
-        const randMaxLength = 1500
+        const randMaxLength = 1200
         this.modelList.forEach((item) => {
             maxParticlesCount = Math.max(maxParticlesCount,item.attributes.position.count)
         })
         this.maxParticlesCount = maxParticlesCount
+        
+        this.MainParticleGroup = new Tween.Group()
         for (let i = 0; i < maxParticlesCount; i++) {
             const x = getRangeRandom(-1 * randMaxLength, randMaxLength)
             const y = getRangeRandom(-1 * randMaxLength, randMaxLength)
@@ -314,6 +317,7 @@ class ParticleSystem {
                 point.tweenctx!._valuesStart.y = point.y
                 // @ts-expect-error
                 point.tweenctx!._valuesStart.z = point.z
+                point.isPlaying = false
             })
             .onStart((point) => {
                 // @ts-expect-error

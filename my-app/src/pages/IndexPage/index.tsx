@@ -61,6 +61,29 @@ function IndexPage(){
     })
 
     const Models = [{
+      name:'ball3',
+      path:new URL('../../THREE/models/ball3.fbx',import.meta.url).href,
+      onLoadComplete(Geometry:THREE.BufferGeometry) {
+        const s = 400
+        Geometry.scale(s, s, s)
+        
+        // 旋转球体，使顶点朝上下方向（X轴旋转90度）
+        Geometry.translate(-600, 0, -100)
+      },
+      loader:{
+        loaderInstance : new FBXLoader(),
+        load(group:any){
+          const g = new BufferGeometry()
+          let arr = new Float32Array([])
+          for (const i of group.children){
+            arr = new Float32Array([...arr,...i.geometry.attributes.position.array])
+          }
+          g.setAttribute('position',new Float32BufferAttribute(VerticesDuplicateRemove(arr),3))
+          return g
+        }
+      }
+    },
+    {
       name:'cube',
       path:new URL('../../THREE/models/cube.fbx',import.meta.url).href,
       onLoadComplete(Geometry:THREE.BufferGeometry) {
@@ -79,7 +102,8 @@ function IndexPage(){
           return g
         }
       }
-    }]
+    }
+  ]
       // @ts-expect-error
     window.changeModel = (name: string) => {
         if (MainParticle != null) {
