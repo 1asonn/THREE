@@ -245,6 +245,7 @@ class ParticleSystem {
     // 加载粒子模型列表
     private _addModels(){
         const TextureLoader = new THREE.TextureLoader()
+        TextureLoader.crossOrigin = ''
         this.PointMaterial = new THREE.PointsMaterial({
             size: 5,
             sizeAttenuation: true,
@@ -261,7 +262,9 @@ class ParticleSystem {
             const finishLoad = () => {
                 this.modelList.set(model.name, Geometry)
                 model.onLoadComplete?.call(this,Geometry)
-                this._finishLoadModel()
+                this._LOAD_COUNT_++
+                // 等到所有模型载入后再构建粒子动画系统
+                if(this._LOAD_COUNT_ === this.Models.size)this._finishLoadModel()
             }
             
 
@@ -377,7 +380,7 @@ class ParticleSystem {
               })
               .start()
         }
-        // 触发 addons 的钩子
+
         this.instance?.forEach((val) => {
         val.ChangeModel?.call(this)
       })

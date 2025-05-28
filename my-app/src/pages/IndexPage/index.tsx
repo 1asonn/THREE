@@ -60,7 +60,8 @@ function IndexPage(){
       }
     })
 
-    const Models = [{
+    const Models = [
+    {
       name:'ball3',
       path:new URL('../../THREE/models/ball3.fbx',import.meta.url).href,
       onLoadComplete(Geometry:THREE.BufferGeometry) {
