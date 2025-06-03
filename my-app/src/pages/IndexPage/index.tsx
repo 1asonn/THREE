@@ -4,6 +4,7 @@ import Styles from './index.module.scss'
 import ParticleSystem from '../../THREE'
 import Tween from '@tweenjs/tween.js'
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { BufferGeometry, Float32BufferAttribute } from "three";
 import VerticesDuplicateRemove from '../../utils/VerticesDuplicateRemove'
 
@@ -82,7 +83,7 @@ function IndexPage(){
           g.setAttribute('position',new Float32BufferAttribute(VerticesDuplicateRemove(arr),3))
           return g
         }
-      }
+      },
     },
     {
       name:'cube',
@@ -103,6 +104,23 @@ function IndexPage(){
           return g
         }
       }
+    },
+    {
+      name:'apollo',
+      path:new URL('../../THREE/models/ApolloSoyuz.glb', import.meta.url).href,
+      loader:{
+        loaderInstance : new GLTFLoader(),
+        load(gltf:any){
+          const g = new BufferGeometry()
+          let arr = new Float32Array([])
+          console.log("this is gltf",gltf)
+          // for (const i of gltf.scene.children){
+          //   arr = new Float32Array([...arr,...i.geometry.attributes.position.array])
+          // }
+          // g.setAttribute('position',new Float32BufferAttribute(VerticesDuplicateRemove(arr),3))
+          return g
+        }
+      }
     }
   ]
       // @ts-expect-error
@@ -118,7 +136,7 @@ function IndexPage(){
           MainParticle = new ParticleSystem({
             Models,
             CanvasWrapper: wrapper.current,
-            instance: []
+            instance: [Atomsphere1,Atomsphere2,Atomsphere3]
         })
         }
     })
@@ -136,9 +154,9 @@ function IndexPage(){
             }
           </ul>
           <ul className={Styles.function_list}>
-            {/* <li onClick={() => MainParticle?.ListenMouseMove()}>ListenMouseMove</li>
+            <li onClick={() => MainParticle?.ListenMouseMove()}>ListenMouseMove</li>
             <li onClick={() => MainParticle?.StopListenMouseMove()}>StopListenMouseMove</li>
-            <li onClick={() => MainParticle?.AlignCameraCenter()}>AlignCameraCenter</li>
+            {/* <li onClick={() => MainParticle?.AlignCameraCenter()}>AlignCameraCenter</li>
             <li onClick={() => MainParticle?.AlignCameraCenter(true)}>AlignCameraCenter(immediately)</li> */}
           </ul>
         </div>

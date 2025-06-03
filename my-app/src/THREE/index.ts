@@ -20,6 +20,7 @@ import { ParticleModelProps, TWEEN_POINT } from '@/declare/THREE'
 import VerticesDuplicateRemove from '@/utils/VerticesDuplicateRemove'
 import BuiltinShaderAttributeName from '../constant/THREE/BuiltinShaderAttributeName'
 import { instanceBasic } from '@/declare/THREE/instance'
+import { log } from 'console'
 
 
 function getRangeRandom(e: number, t: number) {
@@ -50,7 +51,7 @@ class ParticleSystem {
     private readonly orbitControls?: OrbitControls
     private stats?: Stats
     /** 主要表演场景对象 */
-    public scene?: THREE.Scene
+    public scene!: THREE.Scene
     /** 主要相机对象 */
     public camera?: THREE.PerspectiveCamera
     /** 渲染器 */
@@ -102,6 +103,7 @@ class ParticleSystem {
       /* 宽高 */
       this.HEIGHT = window.innerHeight
       this.WIDTH = window.innerWidth
+      console.log("-=-=-=-=-=-=-=",this.WIDTH,this.HEIGHT)
       /** 模型列表  */
       this.modelList = new Map()
       /** 已加载的模型数量统计 */
@@ -142,6 +144,31 @@ class ParticleSystem {
         const axesHelper = new THREE.AxesHelper(500)
         this.scene.add(axesHelper)
 
+        // 添加坐标轴标签
+        const addAxisLabel = (text: string, position: THREE.Vector3, color: string) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 100;
+            canvas.height = 100;
+            const context = canvas.getContext('2d')!;
+            context.font = 'Bold 40px Arial';
+            context.fillStyle = color;
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText(text, 50, 50);
+        
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(material);
+            sprite.position.copy(position);
+            sprite.scale.set(100, 100, 1);
+            this.scene.add(sprite);
+        };
+        
+        // 添加 X、Y、Z 轴标签
+        addAxisLabel('X', new THREE.Vector3(550, 0, 0), '#ff0000');
+        addAxisLabel('Y', new THREE.Vector3(0, 550, 0), '#00ff00');
+        addAxisLabel('Z', new THREE.Vector3(0, 0, 550), '#0000ff');
+
         if(this.instance){
             this.instance.forEach((item) => {
                 this.scene?.add(item.Geometry)
@@ -161,7 +188,6 @@ class ParticleSystem {
         this.renderer.setClearColor(this.scene.fog.color)
         // 定义渲染器的尺寸；在这里它会填满整个屏幕
         this.renderer.setSize(this.WIDTH, this.HEIGHT)
-    
         // 打开渲染器的阴影地图
         this.renderer.shadowMap.enabled = true
         // this.renderer.shadowMapSoft = true;
@@ -224,6 +250,7 @@ class ParticleSystem {
             item.update()
         })
         this.composer?.render()
+        this._updateSceneRotate()
         requestAnimationFrame((t) => {
             this.update(t)
         })
@@ -273,7 +300,6 @@ class ParticleSystem {
                     const { loaderInstance, load } = model.loader
                     loaderInstance.load(model.path,(res) => {
                         // 使用提供的自定义加载方法加载粒子系统
-                        console.log("what's this?",res)
                         Geometry = load(res)
                         finishLoad()
                     })
@@ -385,6 +411,36 @@ class ParticleSystem {
         val.ChangeModel?.call(this)
       })
     }
+
+    private rotateScene = (e:MouseEvent) =>{
+        this.mouseV = 7e-3 * (e.clientX - this.WIDTH / 2) 
+        this.mouseK = 5e-3 * (e.clientY - this.HEIGHT / 2)
+    }
+
+    private _updateSceneRotate(){
+        this.scene.rotation.y += (this.mouseV - this.scene.rotation.y) / 50
+        this.scene.rotation.x += (this.mouseK - this.scene.rotation.x) / 50        
+    }
+
+    // 监听鼠标移动事件
+    ListenMouseMove(){
+        if(!this.hadListenMouseMove){
+        window.addEventListener('mousemove',this.rotateScene)
+        this.hadListenMouseMove = true
+        }
+    }
+
+    // 中止监听鼠标移动事件
+    StopListenMouseMove(){
+        if(this.hadListenMouseMove){
+        window.removeEventListener('mousemove',this.rotateScene)
+        this.hadListenMouseMove = false
+        }
+    }
+
+
+
+    
 }
 
 export default ParticleSystem
