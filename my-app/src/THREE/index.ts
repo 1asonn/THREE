@@ -438,6 +438,19 @@ class ParticleSystem {
         }
     }
 
+    // 创建网格模型
+    createMeshModel(geometry: THREE.BufferGeometry, material?: THREE.Material){
+        const meshMaterial = material || new THREE.MeshPhongMaterial({
+            color: 0xffffff,
+            wireframe: false,
+            transparent: true,
+            opacity: 1,
+            side: THREE.DoubleSide
+        })
+        const mesh = new THREE.Mesh(geometry,meshMaterial)
+        this.scene?.add(mesh)
+        return mesh
+    }
 
 
     

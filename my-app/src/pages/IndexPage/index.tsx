@@ -75,13 +75,59 @@ function IndexPage(){
       loader:{
         loaderInstance : new FBXLoader(),
         load(group:any){
+          // 创建一个新的 BufferGeometry 用于粒子渲染
           const g = new BufferGeometry()
-          let arr = new Float32Array([])
-          for (const i of group.children){
-            arr = new Float32Array([...arr,...i.geometry.attributes.position.array])
+          
+          // 收集所有子网格的顶点和索引数据
+          let positions: number[] = [];
+          let indices: number[] = [];
+          let indexOffset = 0;
+          
+          // 遍历所有子网格
+          for (const child of group.children) {
+            if (child.geometry) {
+              // 获取顶点位置
+              const positionAttribute = child.geometry.attributes.position;
+              const positionArray = positionAttribute.array;
+              
+              // 收集顶点数据
+              for (let i = 0; i < positionArray.length; i++) {
+                positions.push(positionArray[i]);
+              }
+              
+              // 如果有索引数据，收集并调整偏移量
+              if (child.geometry.index) {
+                const indexArray = child.geometry.index.array;
+                for (let i = 0; i < indexArray.length; i++) {
+                  indices.push(indexArray[i] + indexOffset);
+                }
+              } else {
+                // 如果没有索引，创建简单的三角形索引
+                for (let i = 0; i < positionAttribute.count; i += 3) {
+                  if (i + 2 < positionAttribute.count) {
+                    indices.push(i + indexOffset, i + 1 + indexOffset, i + 2 + indexOffset);
+                  }
+                }
+              }
+              
+              // 更新索引偏移量
+              indexOffset += positionAttribute.count;
+            }
           }
-          g.setAttribute('position',new Float32BufferAttribute(VerticesDuplicateRemove(arr),3))
-          return g
+          
+          // 为粒子渲染去重顶点
+          const uniquePositions = VerticesDuplicateRemove(new Float32Array(positions));
+          g.setAttribute('position', new Float32BufferAttribute(uniquePositions, 3));
+          
+          // 为网格渲染设置索引
+          if (indices.length > 0) {
+            g.setIndex(indices);
+          }
+          
+          // 计算法线用于光照
+          g.computeVertexNormals();
+          
+          return g;
         }
       },
     },
@@ -95,13 +141,59 @@ function IndexPage(){
       loader:{
         loaderInstance : new FBXLoader(),
         load(group:any){
+          // 创建一个新的 BufferGeometry 用于粒子渲染
           const g = new BufferGeometry()
-          let arr = new Float32Array([])
-          for (const i of group.children){
-            arr = new Float32Array([...arr,...i.geometry.attributes.position.array])
+          
+          // 收集所有子网格的顶点和索引数据
+          let positions: number[] = [];
+          let indices: number[] = [];
+          let indexOffset = 0;
+          
+          // 遍历所有子网格
+          for (const child of group.children) {
+            if (child.geometry) {
+              // 获取顶点位置
+              const positionAttribute = child.geometry.attributes.position;
+              const positionArray = positionAttribute.array;
+              
+              // 收集顶点数据
+              for (let i = 0; i < positionArray.length; i++) {
+                positions.push(positionArray[i]);
+              }
+              
+              // 如果有索引数据，收集并调整偏移量
+              if (child.geometry.index) {
+                const indexArray = child.geometry.index.array;
+                for (let i = 0; i < indexArray.length; i++) {
+                  indices.push(indexArray[i] + indexOffset);
+                }
+              } else {
+                // 如果没有索引，创建简单的三角形索引
+                for (let i = 0; i < positionAttribute.count; i += 3) {
+                  if (i + 2 < positionAttribute.count) {
+                    indices.push(i + indexOffset, i + 1 + indexOffset, i + 2 + indexOffset);
+                  }
+                }
+              }
+              
+              // 更新索引偏移量
+              indexOffset += positionAttribute.count;
+            }
           }
-          g.setAttribute('position',new Float32BufferAttribute(VerticesDuplicateRemove(arr),3))
-          return g
+          
+          // 为粒子渲染去重顶点
+          const uniquePositions = VerticesDuplicateRemove(new Float32Array(positions));
+          g.setAttribute('position', new Float32BufferAttribute(uniquePositions, 3));
+          
+          // 为网格渲染设置索引
+          if (indices.length > 0) {
+            g.setIndex(indices);
+          }
+          
+          // 计算法线用于光照
+          g.computeVertexNormals();
+          
+          return g;
         }
       }
     },
@@ -112,12 +204,55 @@ function IndexPage(){
         loaderInstance : new GLTFLoader(),
         load(gltf:any){
           const g = new BufferGeometry()
-          let arr = new Float32Array([])
+          let positions: number[] = [];
+          let indices: number[] = [];
+          let indexOffset = 0;
+          
           console.log("this is gltf",gltf)
-          // for (const i of gltf.scene.children){
-          //   arr = new Float32Array([...arr,...i.geometry.attributes.position.array])
-          // }
-          // g.setAttribute('position',new Float32BufferAttribute(VerticesDuplicateRemove(arr),3))
+          
+          // 遍历所有包含网格的子对象
+          gltf.scene.traverse((child: any) => {
+            if (child.isMesh && child.geometry) {
+              // 获取顶点位置
+              const positionAttribute = child.geometry.attributes.position;
+              const positionArray = positionAttribute.array;
+              
+              // 收集顶点数据
+              for (let i = 0; i < positionArray.length; i++) {
+                positions.push(positionArray[i]);
+              }
+              
+              // 如果有索引数据，收集并调整偏移量
+              if (child.geometry.index) {
+                const indexArray = child.geometry.index.array;
+                for (let i = 0; i < indexArray.length; i++) {
+                  indices.push(indexArray[i] + indexOffset);
+                }
+              } else {
+                // 如果没有索引，创建简单的三角形索引
+                for (let i = 0; i < positionAttribute.count; i += 3) {
+                  if (i + 2 < positionAttribute.count) {
+                    indices.push(i + indexOffset, i + 1 + indexOffset, i + 2 + indexOffset);
+                  }
+                }
+              }
+              
+              // 更新索引偏移量
+              indexOffset += positionAttribute.count;
+            }
+          });
+          // 为粒子渲染去重顶点
+          const uniquePositions = VerticesDuplicateRemove(new Float32Array(positions));
+          g.setAttribute('position', new Float32BufferAttribute(uniquePositions, 3));
+          
+          // 为网格渲染设置索引
+          if (indices.length > 0) {
+            g.setIndex(indices);
+          }
+          
+          // 计算法线用于光照
+          g.computeVertexNormals();
+          
           return g
         }
       }
@@ -164,3 +299,4 @@ function IndexPage(){
 }
 
 export default IndexPage
+
