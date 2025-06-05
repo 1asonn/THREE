@@ -306,8 +306,12 @@ class ParticleSystem {
                 }
             }
         })
-
-        
+        const testG = new THREE.BoxGeometry(100,100,100)
+        const testM = new THREE.MeshBasicMaterial({
+            color: '#ff0000'
+        })
+        const testMesh = new THREE.Mesh(testG,testM)
+        this.scene?.add(testMesh)
     }
 
     // 完成粒子模型加载后回调
