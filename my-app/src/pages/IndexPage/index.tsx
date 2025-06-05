@@ -85,6 +85,7 @@ function IndexPage(){
           
           // 遍历所有子网格
           for (const child of group.children) {
+            console.log("🚀child",child)
             if (child.geometry) {
               // 获取顶点位置
               const positionAttribute = child.geometry.attributes.position;
